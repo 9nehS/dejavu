@@ -213,7 +213,7 @@ class DejavuTest(object):
             line = self.get_line_id(song)
             result = subprocess.check_output([
                 "python", 
-                "dejavu.py",
+                "dejavu_app.py",
                 '-r',
                 'file', 
                 self.test_folder + "/" + f])
