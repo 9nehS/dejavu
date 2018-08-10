@@ -24,6 +24,7 @@ ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'm4a'])
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 def init(configpath):
     """ 
     Load config from a JSON file
@@ -43,8 +44,11 @@ def init(configpath):
 def help():
     return jsonify(
         {
-         'Print help info': '/icetest/dejavu/help'
-         })
+            '[GET]Print help info': '/icetest/dejavu/help',
+            '[GET]List fingerprinted audio': '/icetest/dejavu/audio/list',
+            '[POST]Fingerprint audio': '/icetest/dejavu/audio/fingerprint',
+            '[POST]Recognize audio': '/icetest/dejavu/audio/recognize'
+        })
 
 
 @app.route('/icetest/dejavu/audio/list')
@@ -69,19 +73,37 @@ def fingerprint():
             filename = secure_filename(file.filename)
             abs_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(abs_filename)
-            #return json_msg('Success', abs_filename)
+            # return json_msg('Success', abs_filename)
             result = djv.fingerprint_file(abs_filename)
             if result == Dejavu.FINGERPRINT_STATUS_SUCCESS:
                 return json_msg('Success', 'Fingerprint succeed')
             elif result == Dejavu.FINGERPRINT_STATUS_FILE_EXISTED:
                 return json_msg('Warning', 'File fingerprint existed')
-    return
+
+    return json_msg('Error', 'Some error occurred during fingerprint')
 
 
 @app.route('/icetest/dejavu/audio/recognize', methods=['POST'])
 def recognize():
     global djv
-    pass
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            return json_msg('Error', 'No file part in message posted')
+        file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            return json_msg('Error', 'No selected file')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            abs_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(abs_filename)
+            # return json_msg('Success', abs_filename)
+            result = djv.recognize(FileRecognizer, abs_filename)
+            return jsonify(result)
+
+    return json_msg('Error', 'Some error occurred during fingerprint')
 
 
 def allowed_file(filename):
@@ -91,7 +113,7 @@ def allowed_file(filename):
 
 def json_msg(result=None, msg=None):
     dict_msg = {'result': result,
-           'message': msg}
+                'message': msg}
     return jsonify(dict_msg)
 
 
