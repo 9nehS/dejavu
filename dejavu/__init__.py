@@ -18,6 +18,9 @@ class Dejavu(object):
     RELATIVE_CONFIDENCE = 'relative_confidence'
     AUDIO_LENGTH = 'audio_length'
 
+    FINGERPRINT_STATUS_FILE_EXISTED = 100
+    FINGERPRINT_STATUS_SUCCESS = 101
+
     def __init__(self, config):
         super(Dejavu, self).__init__()
 
@@ -102,6 +105,7 @@ class Dejavu(object):
         # don't refingerprint already fingerprinted files
         if song_hash in self.songhashes_set:
             print "%s already fingerprinted, continuing..." % song_name
+            return Dejavu.FINGERPRINT_STATUS_FILE_EXISTED
         else:
             song_name, hashes, file_hash, audio_length = _fingerprint_worker(
                 filepath,
@@ -110,12 +114,14 @@ class Dejavu(object):
             )
             sid = self.db.insert_song(song_name, file_hash, audio_length)
 
-            # Added by 9nehS as a workaroud for issue https://github.com/worldveil/dejavu/issues/142
+            # Added by 9nehS as a workaround for issue https://github.com/worldveil/dejavu/issues/142
             hashes = _convert_hashes(hashes)
 
             self.db.insert_hashes(sid, hashes)
             self.db.set_song_fingerprinted(sid)
             self.get_fingerprinted_songs()
+
+            return Dejavu.FINGERPRINT_STATUS_SUCCESS
 
     def find_matches(self, samples, Fs=fingerprint.DEFAULT_FS):
         hashes = fingerprint.fingerprint(samples, Fs=Fs)
