@@ -23,6 +23,7 @@ ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'm4a'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024    # Limit the maximum allowed payload to 10 megabytes
 
 
 def init(configpath):
