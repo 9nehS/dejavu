@@ -102,7 +102,7 @@ def recognize():
             file.save(abs_filename)
             # return json_msg('Success', abs_filename)
             result = djv.recognize(FileRecognizer, abs_filename)
-            return jsonify(result)
+            return jsonify(result) if result is not None else json_msg('Warning', 'No audio matched')
 
     return json_msg('Error', 'Some error occurred during fingerprint')
 
